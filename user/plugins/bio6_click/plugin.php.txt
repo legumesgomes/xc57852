@@ -1,0 +1,32 @@
+<?php
+/*
+Plugin Name: bio6_click
+Plugin URI: ../user/plugins/bio6_click/admin-page.php
+Description: Tema administrativo em Tailwind para o YOURLS, baseado no Sleeky, com controle de menus por roles.
+Version: 1.0
+Author: bio6.click
+*/
+
+// Garante que está sendo carregado pelo YOURLS
+if( !defined( 'YOURLS_ABSPATH' ) ) die();
+
+// Inclui funções de layout e roles
+require_once __DIR__ . '/includes/layout.php';
+require_once __DIR__ . '/includes/roles.php';
+
+// Hook: substitui o cabeçalho e rodapé
+yourls_add_action( 'html_head', 'bio6_click_html_head' );
+yourls_add_action( 'html_footer', 'bio6_click_html_footer' );
+
+// Hook: substitui o menu do Sleeky / YOURLS
+yourls_add_action( 'admin_menu', 'bio6_click_html_menu' );
+
+// Hook: adiciona a página de administração
+yourls_add_action( 'plugins_loaded', function() {
+    yourls_register_plugin_page( 'bio6_click', 'Gerenciar bio6_click', 'bio6_click_admin_page' );
+});
+
+// Função que carrega admin-page.php
+function bio6_click_admin_page() {
+    require_once __DIR__ . '/admin-page.php';
+}

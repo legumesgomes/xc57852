@@ -1,0 +1,147 @@
+/* ==========================================================
+   Bio6.click - Custom Scripts
+   Local: user/plugins/bio6_click/assets/js/script.js
+   ========================================================== */
+
+/**
+ * Safe log wrapper (não quebra se console não existir)
+ */
+function bio6_log(...args) {
+    if (window.console) {
+        console.log("[Bio6]", ...args);
+    }
+}
+
+/**
+ * Inicialização geral ao carregar DOM
+ */
+document.addEventListener("DOMContentLoaded", function () {
+    bio6_log("script.js carregado e DOM pronto");
+
+    // Inicializar funções utilitárias
+    bio6_toggleInactivePlugins();
+    bio6_checkboxHelpers();
+    bio6_rolePermissions();
+    bio6_alertAutoClose();
+});
+
+/* ==========================================================
+   1. Toggle plugins inativos (usado na página de plugins)
+   ========================================================== */
+function bio6_toggleInactivePlugins() {
+    const toggle = document.querySelector("#toggle_plugins");
+    if (!toggle) return;
+
+    toggle.addEventListener("click", function () {
+        const inactiveRows = document.querySelectorAll("#main_table tr.inactive");
+        inactiveRows.forEach((row) => {
+            row.style.display = row.style.display === "none" ? "" : "none";
+        });
+
+        bio6_log("Plugins inativos alternados");
+    });
+}
+
+/* ==========================================================
+   2. Checkbox helpers (select all)
+   ========================================================== */
+function bio6_checkboxHelpers() {
+    const masterChecks = document.querySelectorAll("[data-check-all]");
+    masterChecks.forEach((master) => {
+        master.addEventListener("change", function () {
+            const target = master.getAttribute("data-check-all");
+            const checkboxes = document.querySelectorAll(
+                "input[type='checkbox'][data-group='" + target + "']"
+            );
+            checkboxes.forEach((cb) => (cb.checked = master.checked));
+            bio6_log("Checkbox group '" + target + "' set to", master.checked);
+        });
+    });
+}
+
+/* ==========================================================
+   3. Role permissions (plugins x roles)
+   ========================================================== */
+function bio6_rolePermissions() {
+    const roleTable = document.querySelector("#role_plugin_table");
+    if (!roleTable) return;
+
+    roleTable.addEventListener("change", function (e) {
+        if (e.target.type === "checkbox") {
+            const plugin = e.target.getAttribute("data-plugin");
+            const role = e.target.getAttribute("data-role");
+            const isChecked = e.target.checked;
+
+            // Aqui podemos enviar via fetch() para salvar no banco
+            fetch("admin-ajax.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body:
+                    "action=bio6_save_role_permission" +
+                    "&plugin=" +
+                    encodeURIComponent(plugin) +
+                    "&role=" +
+                    encodeURIComponent(role) +
+                    "&allowed=" +
+                    (isChecked ? 1 : 0),
+            })
+                .then((res) => res.text())
+                .then((data) => {
+                    bio6_log("Permissão salva:", plugin, role, isChecked, data);
+                })
+                .catch((err) => {
+                    console.error("Erro ao salvar permissão:", err);
+                });
+        }
+    });
+}
+
+/* ==========================================================
+   4. Auto close alerts
+   ========================================================== */
+function bio6_alertAutoClose() {
+    const alerts = document.querySelectorAll(".bio6-alert");
+    alerts.forEach((alert) => {
+        setTimeout(() => {
+            alert.classList.add("opacity-0");
+            setTimeout(() => alert.remove(), 500);
+        }, 5000);
+    });
+}
+
+/* ==========================================================
+   5. Mobile menu toggle
+   ========================================================== */
+function bio6_mobileMenu() {
+    const btn = document.querySelector("#menu-toggle");
+    const nav = document.querySelector("#menu-nav");
+    if (!btn || !nav) return;
+
+    btn.addEventListener("click", () => {
+        nav.classList.toggle("hidden");
+        bio6_log("Menu mobile alternado");
+    });
+}
+
+/* ==========================================================
+   6. Dark/Light mode (opcional)
+   ========================================================== */
+function bio6_darkModeToggle() {
+    const btn = document.querySelector("#darkmode-toggle");
+    if (!btn) return;
+
+    btn.addEventListener("click", () => {
+        document.body.classList.toggle("light");
+        localStorage.setItem(
+            "bio6_darkmode",
+            document.body.classList.contains("light") ? "light" : "dark"
+        );
+    });
+
+    // Restora preferencia
+    if (localStorage.getItem("bio6_darkmode") === "light") {
+        document.body.classList.add("light");
+    }
+}

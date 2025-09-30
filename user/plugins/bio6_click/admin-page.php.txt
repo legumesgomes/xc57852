@@ -1,0 +1,74 @@
+<?php
+/*
+Plugin Name: Bio6.click Theme Manager
+Plugin URI: ../user/plugins/bio6_click/admin-page.php
+Description: Gerenciamento de roles para plugins do Bio6.click
+Version: 1.0
+Author: Bio6.click
+*/
+
+// Carrega núcleo YOURLS
+require_once dirname( __FILE__, 3 ) . '/includes/load-yourls.php';
+
+// Inclui funções de roles
+require_once __DIR__ . '/includes/roles.php';
+
+// Processa salvamento das permissões
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['plugin_roles'])) {
+    foreach ($_POST['plugin_roles'] as $plugin_file => $roles) {
+        bio6_click_set_plugin_roles($plugin_file, $roles);
+    }
+    echo '<div class="bg-green-100 text-green-800 p-3 rounded mb-4">Permissões atualizadas com sucesso!</div>';
+}
+
+// Obtém plugins ativos
+$plugins = yourls_get_plugins();
+$roles   = bio6_click_get_roles();
+
+// Cabeçalho padrão YOURLS
+yourls_html_head( 'Gerenciar Roles' );
+yourls_html_logo();
+yourls_html_menu();
+?>
+
+<main class="max-w-5xl mx-auto py-10 px-6">
+    <h1 class="text-2xl font-bold mb-6">Gerenciar Permissões de Plugins por Role</h1>
+
+    <form method="post" class="space-y-6">
+        <table class="w-full border-collapse bg-white shadow rounded">
+            <thead>
+                <tr class="bg-slate-100 text-left">
+                    <th class="p-3 border">Plugin</th>
+                    <?php foreach ($roles as $role): ?>
+                        <th class="p-3 border text-center"><?php echo ucfirst($role); ?></th>
+                    <?php endforeach; ?>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($plugins as $plugin_file => $plugin_data): ?>
+                    <tr>
+                        <td class="p-3 border font-medium">
+                            <?php echo htmlspecialchars($plugin_data['Name']); ?>
+                        </td>
+                        <?php foreach ($roles as $role): ?>
+                            <?php $allowed = bio6_click_user_can_access($plugin_file, $role); ?>
+                            <td class="p-3 border text-center">
+                                <input type="checkbox" name="plugin_roles[<?php echo $plugin_file; ?>][]" value="<?php echo $role; ?>" <?php echo $allowed ? 'checked' : ''; ?>>
+                            </td>
+                        <?php endforeach; ?>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+
+        <div class="mt-6">
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                Salvar Permissões
+            </button>
+        </div>
+    </form>
+</main>
+
+<?php
+// Rodapé customizado
+bio6_click_html_footer();

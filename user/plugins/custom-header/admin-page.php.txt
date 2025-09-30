@@ -1,0 +1,48 @@
+<?php
+if (!defined('YOURLS_ABSPATH')) die();
+
+global $ydb;
+$table = YOURLS_DB_PREFIX . "menu_roles";
+$roles = ['free','vip','paid','admin'];
+
+// Salvar dados
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    foreach($_POST['plugin'] as $plugin => $values) {
+        foreach($roles as $role) {
+            $value = isset($values[$role]) ? 1 : 0;
+            $ydb->perform(
+                "REPLACE INTO `$table` (plugin, role, allowed) VALUES (:plugin, :role, :allowed)",
+                ['plugin'=>$plugin, 'role'=>$role, 'allowed'=>$value]
+            );
+        }
+    }
+    echo '<div class="notice">Configuração salva!</div>';
+}
+
+// Buscar plugins ativos
+$plugins = (array) yourls_get_plugins();
+
+echo '<h2>Gerenciar Header Customizado</h2>';
+echo '<form method="post">';
+echo '<table border="1" cellpadding="5" cellspacing="1">';
+echo '<thead><tr><th>Item</th>';
+foreach($roles as $r) echo "<th>".ucfirst($r)."</th>";
+echo '</tr></thead><tbody>';
+
+foreach($plugins as $file=>$info) {
+    $plugindir = trim(dirname($file), '/');
+    $plugin_name = isset($info['Plugin Name']) ? $info['Plugin Name'] : $plugindir;
+
+    echo "<tr><td>".htmlspecialchars($plugin_name)."</td>";
+    foreach($roles as $r) {
+        $allowed = $ydb->fetchValue("SELECT allowed FROM `$table` WHERE plugin = :plugin AND role = :role",
+                    ['plugin'=>$plugindir, 'role'=>$r]);
+        $checked = ($allowed == 1) ? 'checked' : '';
+        echo "<td><input type='checkbox' name='plugin[$plugindir][$r]' value='1' $checked></td>";
+    }
+    echo "</tr>";
+}
+
+echo '</tbody></table>';
+echo '<p><input type="submit" value="Salvar Configurações" class="button"></p>';
+echo '</form>';

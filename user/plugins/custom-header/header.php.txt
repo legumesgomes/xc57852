@@ -1,0 +1,53 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$role = isset($_SESSION['ua_role']) ? $_SESSION['ua_role'] : 'free';
+$ydb  = yourls_get_db();
+$table = YOURLS_DB_PREFIX . "menu_roles";
+
+$menu_items = [];
+// Itens fixos
+$menu_items[] = ['label'=>'Painel','url'=>yourls_admin_url()];
+$menu_items[] = ['label'=>'Ferramentas','url'=>yourls_admin_url('tools.php')];
+$menu_items[] = ['label'=>'Plugins','url'=>yourls_admin_url('plugins.php')];
+
+// Plugins permitidos pela role
+$plugins = (array) yourls_get_plugins();
+foreach($plugins as $file=>$info) {
+    $plugindir = trim(dirname($file), '/');
+    $allowed = $ydb->fetchValue("SELECT allowed FROM `$table` WHERE plugin = :plugin AND role = :role",
+                ['plugin'=>$plugindir, 'role'=>$role]);
+    if($allowed) {
+        $plugin_name = isset($info['Plugin Name']) ? $info['Plugin Name'] : $plugindir;
+        $menu_items[] = [
+            'label'=>$plugin_name,
+            'url'=>yourls_admin_url("plugins.php?page=$plugindir")
+        ];
+    }
+}
+
+// Render do header
+$logo = 'https://bio6.click/user/plugins/yourls-white-label-main/uploads/1758760162_68d48ce252c74.png';
+$user = isset($_SESSION['ua_username']) ? $_SESSION['ua_username'] : 'Visitante';
+?>
+<header class="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <div class="flex items-center">
+        <img src="<?php echo $logo; ?>" alt="Logo" class="h-8 mr-3">
+      </div>
+      <nav class="flex items-center space-x-4">
+        <?php foreach($menu_items as $item): ?>
+          <a href="<?php echo $item['url']; ?>" class="text-gray-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">
+            <?php echo htmlspecialchars($item['label']); ?>
+          </a>
+        <?php endforeach; ?>
+        <span class="text-gray-400">|</span>
+        <span class="text-gray-300 text-sm">Olá, <?php echo htmlspecialchars($user); ?></span>
+        <a href="?action=logout" class="text-gray-300 hover:text-white text-sm font-medium" title="Sair">[Sair]</a>
+      </nav>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,21 @@
+.mh-nav {
+  background: #f8f8f8;
+  border-bottom: 1px solid #ddd;
+}
+.mh-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+}
+.mh-menu-item {
+  margin-right: 1em;
+}
+.mh-menu-item a {
+  text-decoration: none;
+  color: #333;
+  padding: 0.5em 0.75em;
+}
+.mh-menu-item a:hover {
+  background: #e2e2e2;
+}

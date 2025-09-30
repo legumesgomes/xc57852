@@ -1,0 +1,56 @@
+<?php
+// =====================================================
+// =========== FUNÇÕES DE CONTROLE DE ROLES ============
+// =====================================================
+
+// Obtém role de um usuário
+function bio6_click_get_user_role($username) {
+    global $ydb;
+
+    $table = YOURLS_DB_TABLE_USERS; // tabela padrão do YOURLS
+    $role  = 'free';
+
+    $sql = "SELECT role FROM `$table` WHERE user = :user";
+    $result = $ydb->fetchOne($sql, [':user' => $username]);
+
+    if( $result ) {
+        $role = $result;
+    }
+
+    return $role;
+}
+
+// Verifica se role pode acessar plugin
+function bio6_click_user_can_access($plugin_file, $role) {
+    global $ydb;
+
+    $table = YOURLS_DB_PREFIX . "plugin_access";
+
+    $sql = "SELECT COUNT(*) FROM `$table` WHERE plugin_file = :plugin_file AND role = :role";
+    $count = $ydb->fetchValue($sql, [':plugin_file' => $plugin_file, ':role' => $role]);
+
+    return ($count > 0);
+}
+
+// Salva permissões de roles para um plugin
+function bio6_click_set_plugin_roles($plugin_file, $roles) {
+    global $ydb;
+
+    $table = YOURLS_DB_PREFIX . "plugin_access";
+
+    // Remove roles existentes
+    $ydb->fetchAffected("DELETE FROM `$table` WHERE plugin_file = :plugin_file", [':plugin_file' => $plugin_file]);
+
+    // Insere novos
+    foreach( $roles as $role ) {
+        $ydb->fetchAffected(
+            "INSERT INTO `$table` (plugin_file, role) VALUES (:plugin_file, :role)",
+            [':plugin_file' => $plugin_file, ':role' => $role]
+        );
+    }
+}
+
+// Lista roles disponíveis
+function bio6_click_get_roles() {
+    return ['free', 'vip', 'paid', 'admin'];
+}

@@ -1,0 +1,67 @@
+<?php
+/*
+Plugin Name: Menu Head
+Plugin URI: https://bio6.click
+Description: Gera o header de menu para ser incluído em todas as páginas do YOURLS, com controle de roles.
+Version: 1.0.0
+Author: Bio6.click
+Author URI: https://bio6.click
+*/
+
+if (!defined('YOURLS_ABSPATH')) die();
+
+// Registrar página de administração do plugin
+yourls_add_action('plugins_loaded', 'menu_head_register_page');
+function menu_head_register_page() {
+    yourls_register_plugin_page('menu_head', 'Configuração do Menu', 'menu_head_admin_page');
+}
+
+// Página de administração
+function menu_head_admin_page() {
+    global $ydb;
+    $table = YOURLS_DB_PREFIX . "menu_roles";
+
+    // Salvar dados
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        $roles = ['free','vip','paid','admin'];
+        foreach($_POST['plugin'] as $plugin => $values) {
+            foreach($roles as $role) {
+                $value = isset($values[$role]) ? 1 : 0;
+                $ydb->perform(
+                    "REPLACE INTO `$table` (plugin, role, allowed) VALUES (:plugin, :role, :allowed)",
+                    ['plugin'=>$plugin, 'role'=>$role, 'allowed'=>$value]
+                );
+            }
+        }
+        echo '<div class="notice">Configuração salva!</div>';
+    }
+
+    // Buscar plugins ativos
+    $plugins = (array) yourls_get_plugins();
+    $roles = ['free','vip','paid','admin'];
+
+    echo '<h2>Configuração do Menu</h2>';
+    echo '<form method="post">';
+    echo '<table class="tblSorter" cellpadding="5" cellspacing="1" border="1">';
+    echo '<thead><tr><th>Plugin</th>';
+    foreach($roles as $r) echo "<th>".ucfirst($r)."</th>";
+    echo '</tr></thead><tbody>';
+
+    foreach($plugins as $file=>$info) {
+        $plugindir = trim(dirname($file), '/');
+        $plugin_name = isset($info['Plugin Name']) ? $info['Plugin Name'] : $plugindir;
+
+        echo "<tr><td>".htmlspecialchars($plugin_name)."</td>";
+        foreach($roles as $r) {
+            $allowed = $ydb->fetchValue("SELECT allowed FROM `$table` WHERE plugin = :plugin AND role = :role",
+                        ['plugin'=>$plugindir, 'role'=>$r]);
+            $checked = ($allowed == 1) ? 'checked' : '';
+            echo "<td><input type='checkbox' name='plugin[$plugindir][$r]' value='1' $checked></td>";
+        }
+        echo "</tr>";
+    }
+
+    echo '</tbody></table>';
+    echo '<p><input type="submit" value="Salvar Configurações" class="button"></p>';
+    echo '</form>';
+}

@@ -1,0 +1,100 @@
+<?php
+/*
+Plugin Name: Bio6.click
+Plugin URI: ../user/plugins/bio6_click/admin-page.php
+Description: Tema e controle de menu para Bio6.click, baseado em Tailwind.
+Version: 1.0
+Author: Bio6
+Author URI: https://bio6.click
+*/
+
+if (!defined('YOURLS_ABSPATH')) {
+    die('Acesso negado');
+}
+
+// =====================================================
+// Ativar assets (CSS/JS)
+// =====================================================
+function bio6_click_load_assets() {
+    $plugin_url = YOURLS_PLUGINURL . '/bio6_click/assets';
+    echo '<link rel="stylesheet" href="' . $plugin_url . '/css/style.css?v=' . time() . '">';
+    echo '<script src="' . $plugin_url . '/js/script.js?v=' . time() . '"></script>';
+}
+yourls_add_action('html_head', 'bio6_click_load_assets');
+
+// =====================================================
+// Header customizado com logo
+// =====================================================
+function bio6_click_custom_header() {
+    $logo_url = YOURLS_SITE . '/user/plugins/yourls-white-label-main/uploads/1758761163_68d490cb530b3.png';
+    ?>
+    <header class="w-full bg-gray-800 text-white shadow flex items-center justify-between px-4 py-2">
+        <div class="flex items-center space-x-3">
+            <img src="<?php echo $logo_url; ?>" alt="Bio6 Logo" class="h-10 w-auto">
+            <span class="text-xl font-bold">Bio6.click</span>
+        </div>
+        <nav id="bio6-menu" class="flex space-x-6">
+            <!-- O menu será injetado dinamicamente pelo plugin -->
+        </nav>
+    </header>
+    <?php
+}
+yourls_add_action('html_head', 'bio6_click_custom_header', 99);
+
+// =====================================================
+// Admin page link no menu de plugins
+// =====================================================
+function bio6_click_register_admin_page() {
+    yourls_register_plugin_page('bio6_click', 'Gerenciar Bio6', 'bio6_click_admin_page');
+}
+yourls_add_action('plugins_loaded', 'bio6_click_register_admin_page');
+
+function bio6_click_admin_page() {
+    include __DIR__ . '/admin-page.php';
+}
+
+// =====================================================
+// Salvar permissões AJAX (checkboxes de roles por plugin)
+// =====================================================
+function bio6_click_handle_ajax() {
+    yourls_maybe_require_auth();
+
+    $action = $_POST['action'] ?? '';
+    if ($action === 'bio6_save_role_permission') {
+        global $ydb;
+
+        $plugin = $_POST['plugin'] ?? '';
+        $role   = $_POST['role'] ?? '';
+        $allowed = intval($_POST['allowed'] ?? 0);
+
+        if ($plugin && $role) {
+            $table = YOURLS_DB_PREFIX . 'bio6_menu_roles';
+
+            $exists = $ydb->fetchValue("SELECT COUNT(*) FROM `$table` WHERE plugin = :plugin AND role = :role", [
+                'plugin' => $plugin,
+                'role'   => $role,
+            ]);
+
+            if ($exists) {
+                $ydb->fetchAffected("UPDATE `$table` SET allowed = :allowed WHERE plugin = :plugin AND role = :role", [
+                    'allowed' => $allowed,
+                    'plugin'  => $plugin,
+                    'role'    => $role,
+                ]);
+            } else {
+                $ydb->fetchAffected("INSERT INTO `$table` (plugin, role, allowed) VALUES (:plugin, :role, :allowed)", [
+                    'plugin'  => $plugin,
+                    'role'    => $role,
+                    'allowed' => $allowed,
+                ]);
+            }
+
+            echo "OK";
+        } else {
+            echo "ERRO: parâmetros inválidos";
+        }
+    }
+
+    die();
+}
+yourls_add_action('api', 'bio6_click_handle_ajax');

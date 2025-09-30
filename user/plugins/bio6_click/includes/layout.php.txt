@@ -1,0 +1,63 @@
+<?php
+
+// Cabeçalho em Tailwind
+function bio6_click_html_head() {
+    $brand_name = yourls_get_option('wl_brand_name', 'bio6.click');
+    ?>
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><?php echo htmlspecialchars($brand_name); ?> - Admin</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: 'Inter', sans-serif; }
+        </style>
+    </head>
+    <body class="bg-slate-900 text-gray-200 antialiased">
+    <div class="min-h-screen">
+    <?php
+}
+
+// Menu superior com roles
+function bio6_click_html_menu() {
+    $brand_name = yourls_get_option('wl_brand_name', 'bio6.click');
+    $user = YOURLS_USER;
+    $role = bio6_click_get_user_role($user);
+    ?>
+    <header class="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <img src="https://bio6.click/user/plugins/yourls-white-label-main/uploads/1758761163_68d490cb530b3.png" alt="Logo" class="h-8 w-auto">
+                    <a href="<?php echo yourls_admin_url(); ?>" class="text-2xl font-bold text-white"><?php echo htmlspecialchars($brand_name); ?></a>
+                </div>
+                <nav class="flex items-center space-x-4">
+                    <?php if (bio6_click_role_can_access($role, 'dashboard')): ?>
+                        <a href="<?php echo yourls_admin_url(); ?>" class="text-gray-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Painel</a>
+                    <?php endif; ?>
+                    <?php if (bio6_click_role_can_access($role, 'tools')): ?>
+                        <a href="<?php echo yourls_admin_url('tools.php'); ?>" class="text-gray-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Ferramentas</a>
+                    <?php endif; ?>
+                    <?php if (bio6_click_role_can_access($role, 'plugins')): ?>
+                        <a href="<?php echo yourls_admin_url('plugins.php'); ?>" class="text-gray-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Plugins</a>
+                    <?php endif; ?>
+                    <?php
+                        // Plugins externos ainda podem injetar itens
+                        yourls_do_action('bio6_menu_items');
+                    ?>
+                    <span class="text-gray-400">|</span>
+                    <span class="text-gray-300 text-sm">Olá, <?php echo $user; ?></span>
+                    <a href="?action=logout" class="text-gray-300 hover:text-white text-sm font-medium" title="Sair">[Sair]</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <?php
+}
+
+// Rodapé
+function
